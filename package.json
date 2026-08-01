@@ -1,0 +1,49 @@
+{
+  "name": "ride-weight-log",
+  "version": "1.0.1",
+  "description": "325km x8 - Ride & Weight Log (Audax training tracker)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "build": {
+    "appId": "com.andywhite.ridelog",
+    "productName": "RideLog",
+    "icon": "assets/bicyclist.ico",
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "assets/**"
+    ],
+    "win": {
+      "icon": "assets/bicyclist.ico",
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "RideLog",
+      "installerIcon": "assets/bicyclist.ico",
+      "uninstallerIcon": "assets/bicyclist.ico"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  },
+  "author": "Andy White",
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "garmin-connect": "^1.6.2"
+  }
+}
