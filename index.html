@@ -5425,9 +5425,9 @@ function buildDailyPlan(row){
     days[idx].actual = Math.round(((days[idx].actual || 0) + km) * 10) / 10;
   });
 
-  // Auto-adjust day plan when audax events (200km+) are marked entered/maybe
+  // Auto-adjust day plan when audax events (200km+) are marked 'entered' (not 'maybe')
   const _aw = (myAudaxEvents || [])
-    .filter(e => (e.status === 'entered' || e.status === 'maybe') &&
+    .filter(e => e.status === 'entered' &&
                  e.date >= row.weekStart && e.date <= weekEnd && (e.km || 0) >= 200)
     .sort((a, b) => (a.date < b.date ? -1 : 1));
 
@@ -5459,11 +5459,11 @@ function buildDailyPlan(row){
       days[evIdx + 1].notes = `${ev.km}km event likely still in progress — no extra riding`;
     }
   } else {
-    // Check if next week has an audax event → taper this week
+    // Check if next week has an 'entered' audax event → taper this week (ignore 'maybe')
     const _nws = addDaysISO(row.weekStart, 7);
     const _nwe = addDaysISO(row.weekStart, 13);
     const _naw = (myAudaxEvents || [])
-      .filter(e => (e.status === 'entered' || e.status === 'maybe') &&
+      .filter(e => e.status === 'entered' &&
                    e.date >= _nws && e.date <= _nwe && (e.km || 0) >= 200)
       .sort((a, b) => (a.date < b.date ? -1 : 1));
     if (_naw.length > 0) {
@@ -5480,6 +5480,37 @@ function buildDailyPlan(row){
           days[i].notes += ` · ${tNote}`;
         }
       });
+    }
+
+    // Check if previous week had an 'entered' audax event → add recovery days this week
+    const _pws = addDaysISO(row.weekStart, -7);
+    const _pwe = addDaysISO(row.weekStart, -1);
+    const _paw = (myAudaxEvents || [])
+      .filter(e => e.status === 'entered' &&
+                   e.date >= _pws && e.date <= _pwe && (e.km || 0) >= 200)
+      .sort((a, b) => (a.date > b.date ? -1 : 1)); // Most recent first
+
+    if (_paw.length > 0) {
+      const prevEv = _paw[0];
+      const prevDow = new Date(prevEv.date + 'T00:00:00').getDay();
+      const daysSinceEvent = Math.floor((new Date(row.weekStart + 'T00:00:00') - new Date(prevEv.date + 'T00:00:00')) / 86400000);
+
+      // First 1-2 days of this week should be rest/easy recovery
+      const recoveryDays = prevEv.km >= 300 ? 2 : 1; // Longer events need more recovery
+
+      for (let i = 0; i < Math.min(recoveryDays, 3); i++) {
+        if (i === 0) {
+          // First day: complete rest
+          days[i].km = 0;
+          days[i].focus = 'Rest — post-event recovery';
+          days[i].notes = `Recovery from ${prevEv.name} (${prevEv.km}km) · complete rest`;
+        } else {
+          // Second day: easy spin
+          days[i].km = Math.min(days[i].km || 30, 30);
+          days[i].focus = 'Easy recovery spin';
+          days[i].notes = `Recovery from ${prevEv.name} · easy Zone 1-2, short duration`;
+        }
+      }
     }
   }
 
@@ -5810,10 +5841,10 @@ function renderPlanTab(){
         }).join('<br>')
       : '—';
     const holidayBadge = r.isHoliday ? ` <span class="badge holiday" title="${r.audax}">Holiday</span>` : '';
-    // Detect audax/taper adjustments for this row
-    const bigEvThisWeek = myEventsThisWeek.find(e => (e.status === 'entered' || e.status === 'maybe') && (e.km || 0) >= 200);
+    // Detect audax/taper adjustments for this row - ONLY for 'entered' events, not 'maybe'
+    const bigEvThisWeek = myEventsThisWeek.find(e => e.status === 'entered' && (e.km || 0) >= 200);
     const nws = addDaysISO(r.weekStart, 7); const nwe = addDaysISO(r.weekStart, 13);
-    const bigEvNextWeek = myAudaxEvents.find(e => (e.status === 'entered' || e.status === 'maybe') && e.date >= nws && e.date <= nwe && (e.km || 0) >= 200);
+    const bigEvNextWeek = myAudaxEvents.find(e => e.status === 'entered' && e.date >= nws && e.date <= nwe && (e.km || 0) >= 200);
     const isAudaxWeek = !!bigEvThisWeek;
     const isTaperWeek = !isAudaxWeek && !!bigEvNextWeek;
     const adjVol = isAudaxWeek
@@ -6289,6 +6320,11 @@ function renderWeightDailyTable(){
 }
 
 const CHANGELOG = [
+  { version: 'v1.9.28', date: '2 Aug 2026', changes: [
+    'Training Plan: Audax event handling now distinguishes between "entered" and "maybe" status — plan only adjusts (taper, recovery) for events marked as "entered", allowing you to explore options with "maybe" without affecting your base plan',
+    'Training Plan: automatic recovery days added after entered Audax events — first day complete rest, second day easy 30km spin (200-299km events get 1 recovery day, 300km+ get 2)',
+    'Training Plan: pre-event taper week now only triggers for "entered" events, not "maybe" events',
+  ]},
   { version: 'v1.9.27', date: '2 Aug 2026', changes: [
     'Weight tab: added delete button (trash icon) when editing a weight entry — click any weight row to edit, then use the trash button to remove incorrect entries',
     'Weight tab: date picker now prevents selecting future dates, and the form validates that weight entries can\'t be saved for future dates',
