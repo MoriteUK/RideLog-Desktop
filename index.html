@@ -5976,9 +5976,9 @@ document.getElementById('sync-kailo-plan-btn').addEventListener('click', async (
       schedule: [
         {week_number:1,focus_md:"Current fitness - build towards 200km event on Aug 23",workouts:[{planned_date:"2026-08-02",distance_mi:55},{planned_date:"2026-08-03",distance_mi:33},{planned_date:"2026-08-05",distance_mi:38.5},{planned_date:"2026-08-07",distance_mi:88},{planned_date:"2026-08-08",distance_mi:49.5}]},
         {week_number:2,focus_md:"Final build week - 2 weeks to 200km event",workouts:[{planned_date:"2026-08-10",distance_mi:30},{planned_date:"2026-08-12",distance_mi:40},{planned_date:"2026-08-14",distance_mi:90},{planned_date:"2026-08-15",distance_mi:50}]},
-        {week_number:3,focus_md:"Taper week - 200km Audax on Aug 23",workouts:[{planned_date:"2026-08-17",distance_mi:25},{planned_date:"2026-08-19",distance_mi:30},{planned_date:"2026-08-21",distance_mi:20}]},
-        {week_number:4,focus_md:"200km AUDAX EVENT - August 23rd",workouts:[{planned_date:"2026-08-23",distance_mi:125},{planned_date:"2026-08-26",distance_mi:20},{planned_date:"2026-08-28",distance_mi:25},{planned_date:"2026-08-29",distance_mi:35}]},
-        {week_number:5,focus_md:"Recovery week - consolidate fitness",workouts:[{planned_date:"2026-09-01",distance_mi:22},{planned_date:"2026-09-03",distance_mi:27.5},{planned_date:"2026-09-05",distance_mi:55},{planned_date:"2026-09-06",distance_mi:38.5}]},
+        {week_number:3,focus_md:"Taper week - 200km Audax on Aug 23",workouts:[{planned_date:"2026-08-17",distance_mi:25},{planned_date:"2026-08-19",distance_mi:30},{planned_date:"2026-08-21",distance_mi:20},{planned_date:"2026-08-23",distance_mi:125}]},
+        {week_number:4,focus_md:"Recovery from 200km event",workouts:[{planned_date:"2026-08-25",distance_mi:0},{planned_date:"2026-08-26",distance_mi:20},{planned_date:"2026-08-28",distance_mi:25},{planned_date:"2026-08-29",distance_mi:35}]},
+        {week_number:5,focus_md:"Return to volume - build endurance base",workouts:[{planned_date:"2026-09-01",distance_mi:22},{planned_date:"2026-09-03",distance_mi:27.5},{planned_date:"2026-09-05",distance_mi:55},{planned_date:"2026-09-06",distance_mi:38.5}]},
         {week_number:6,focus_md:"Build to 100-mile weekend",workouts:[{planned_date:"2026-09-08",distance_mi:33},{planned_date:"2026-09-10",distance_mi:38.5},{planned_date:"2026-09-12",distance_mi:99},{planned_date:"2026-09-13",distance_mi:66}]},
         {week_number:7,focus_md:"First 100+ mile Saturday ride",workouts:[{planned_date:"2026-09-15",distance_mi:33},{planned_date:"2026-09-17",distance_mi:41.8},{planned_date:"2026-09-19",distance_mi:115.5},{planned_date:"2026-09-20",distance_mi:71.5}]},
         {week_number:8,focus_md:"Continue progression",workouts:[{planned_date:"2026-09-22",distance_mi:35.2},{planned_date:"2026-09-24",distance_mi:44},{planned_date:"2026-09-26",distance_mi:121},{planned_date:"2026-09-27",distance_mi:77}]},
@@ -6018,15 +6018,23 @@ document.getElementById('sync-kailo-plan-btn').addEventListener('click', async (
     // Clear existing plan
     planRows = [];
 
+    // Week start dates - manually specified Mondays to avoid duplicates
+    const weekStarts = [
+      '2026-07-28','2026-08-04','2026-08-11','2026-08-18','2026-08-25', // Weeks 1-5
+      '2026-09-01','2026-09-08','2026-09-15','2026-09-22','2026-09-29', // Weeks 6-10
+      '2026-10-06','2026-10-13','2026-10-20','2026-10-27','2026-11-03', // Weeks 11-15
+      '2026-11-10','2026-11-17','2026-11-24','2026-12-01','2026-12-08', // Weeks 16-20
+      '2026-12-15','2026-12-22','2026-12-29','2027-01-05','2027-01-12', // Weeks 21-25
+      '2027-01-19','2027-01-26','2027-02-02','2027-02-09','2027-02-16', // Weeks 26-30
+      '2027-02-23','2027-03-01','2027-03-08','2027-04-07'              // Weeks 31-34
+    ];
+
     // Convert Kailo schedule to RideLog planRows
-    for (const week of KAILO_PLAN.schedule) {
+    for (let i = 0; i < KAILO_PLAN.schedule.length; i++) {
+      const week = KAILO_PLAN.schedule[i];
       if (!week.workouts || week.workouts.length === 0) continue;
 
-      // Find the Monday of the week containing the first workout
-      const firstWorkout = week.workouts.find(w => w.planned_date);
-      if (!firstWorkout) continue;
-
-      const weekStart = weekStartISO(firstWorkout.planned_date);
+      const weekStart = weekStarts[i] || weekStartISO(week.workouts[0].planned_date);
 
       // Calculate total volume and find longest ride for the week
       let totalVol = 0;
@@ -6409,6 +6417,11 @@ function renderWeightDailyTable(){
 }
 
 const CHANGELOG = [
+  { version: 'v1.9.31', date: '2 Aug 2026', changes: [
+    'Training Plan: Fixed duplicate week of Aug 23 - event now properly in week 3 (Aug 18-24), recovery in week 4 (Aug 25-31)',
+    'Training Plan: Added explicit Monday week start dates to prevent week calculation errors',
+    'Training Plan: All 34 weeks now display with correct sequential dates',
+  ]},
   { version: 'v1.9.30', date: '2 Aug 2026', changes: [
     'Training Plan: Fixed Kailo sync to load all 34 weeks correctly (was only showing first 4 weeks)',
     'Training Plan: Removed duplicate week entries that were causing confusion',
