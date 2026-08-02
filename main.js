@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -1475,9 +1476,83 @@ function createWindow() {
   win.loadFile('index.html');
 }
 
+// Auto-update configuration
+autoUpdater.autoDownload = false;
+autoUpdater.autoInstallOnAppQuit = true;
+
+let updateInfo = null;
+
+autoUpdater.on('update-available', (info) => {
+  console.log('[Update] Available:', info.version);
+  updateInfo = info;
+  if (BrowserWindow.getAllWindows().length > 0) {
+    BrowserWindow.getAllWindows()[0].webContents.send('update-available', info);
+  }
+});
+
+autoUpdater.on('update-not-available', () => {
+  console.log('[Update] No updates available');
+  updateInfo = null;
+});
+
+autoUpdater.on('download-progress', (progress) => {
+  console.log('[Update] Download progress:', Math.round(progress.percent) + '%');
+  if (BrowserWindow.getAllWindows().length > 0) {
+    BrowserWindow.getAllWindows()[0].webContents.send('update-download-progress', progress);
+  }
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+  console.log('[Update] Downloaded:', info.version);
+  if (BrowserWindow.getAllWindows().length > 0) {
+    BrowserWindow.getAllWindows()[0].webContents.send('update-downloaded', info);
+  }
+});
+
+autoUpdater.on('error', (err) => {
+  console.error('[Update] Error:', err.message);
+  if (BrowserWindow.getAllWindows().length > 0) {
+    BrowserWindow.getAllWindows()[0].webContents.send('update-error', err.message);
+  }
+});
+
+ipcMain.handle('check-for-updates', async () => {
+  try {
+    const result = await autoUpdater.checkForUpdates();
+    return { available: result?.updateInfo != null, info: result?.updateInfo };
+  } catch (err) {
+    console.error('[Update] Check failed:', err.message);
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('download-update', async () => {
+  try {
+    await autoUpdater.downloadUpdate();
+    return { ok: true };
+  } catch (err) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('install-update', () => {
+  autoUpdater.quitAndInstall(false, true);
+});
+
+ipcMain.handle('get-app-version', () => {
+  return app.getVersion();
+});
+
 app.whenReady().then(() => {
   migrateFromAppData();
   createWindow();
+
+  // Check for updates on launch (after a short delay)
+  setTimeout(() => {
+    autoUpdater.checkForUpdates().catch(err => {
+      console.log('[Update] Auto-check failed:', err.message);
+    });
+  }, 3000);
 });
 
 app.on('window-all-closed', () => {

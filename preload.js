@@ -29,4 +29,14 @@ contextBridge.exposeInMainWorld('api', {
   onedriveLoad: (data) => ipcRenderer.invoke('onedrive-load', data),
   onedriveUploadFile: (data) => ipcRenderer.invoke('onedrive-upload-file', data),
   onedriveFileUrl: (data) => ipcRenderer.invoke('onedrive-file-url', data),
+
+  // App updates
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
+  installUpdate: () => ipcRenderer.invoke('install-update'),
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  onUpdateAvailable: (callback) => ipcRenderer.on('update-available', (event, info) => callback(info)),
+  onUpdateDownloadProgress: (callback) => ipcRenderer.on('update-download-progress', (event, progress) => callback(progress)),
+  onUpdateDownloaded: (callback) => ipcRenderer.on('update-downloaded', (event, info) => callback(info)),
+  onUpdateError: (callback) => ipcRenderer.on('update-error', (event, error) => callback(error)),
 });

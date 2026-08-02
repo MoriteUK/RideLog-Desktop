@@ -1,16 +1,26 @@
 {
   "name": "ride-weight-log",
-  "version": "1.0.1",
+  "version": "1.9.27",
   "description": "325km x8 - Ride & Weight Log (Audax training tracker)",
   "main": "main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MoriteUK/RideLog-Desktop.git"
+  },
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder"
+    "build": "electron-builder",
+    "publish": "electron-builder --publish always"
   },
   "build": {
     "appId": "com.andywhite.ridelog",
     "productName": "RideLog",
     "icon": "assets/bicyclist.ico",
+    "publish": {
+      "provider": "github",
+      "owner": "MoriteUK",
+      "repo": "RideLog-Desktop"
+    },
     "files": [
       "main.js",
       "preload.js",
@@ -19,7 +29,8 @@
     ],
     "win": {
       "icon": "assets/bicyclist.ico",
-      "target": "nsis"
+      "target": "nsis",
+      "publisherName": "Andy White"
     },
     "nsis": {
       "oneClick": false,
@@ -44,6 +55,7 @@
     "electron-builder": "^24.13.3"
   },
   "dependencies": {
+    "electron-updater": "^6.8.9",
     "garmin-connect": "^1.6.2"
   }
 }

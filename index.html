@@ -11,6 +11,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="kailo-integration-updated.js"></script>
 <style>
 :root {
   --paper: #F5F0E6;
@@ -423,6 +424,7 @@ td { font-family: var(--font-mono); font-size:13px; padding:6px 10px; border-bot
           <div class="form-row plan-controls" style="margin-bottom:6px;">
             <button type="button" class="btn-subtle" id="goto-today-plan-btn">Go to today</button>
             <button type="button" class="btn-subtle" id="reset-plan-btn">Rebuild plan from today</button>
+            <button type="button" class="btn-subtle" id="sync-kailo-plan-btn" style="background:var(--teal);color:var(--paper);">↻ Sync Kailo Plan</button>
           </div>
           <div class="summary-grid" id="plan-week-summary"></div>
         </div>
@@ -494,7 +496,7 @@ td { font-family: var(--font-mono); font-size:13px; padding:6px 10px; border-bot
     <div style="flex-shrink:0; display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:10px;">
       <form id="entry-form" class="form-row" style="align-items:flex-end; margin:0;">
         <label class="field">Date
-          <input type="date" id="f-date" required>
+          <input type="date" id="f-date" required max="">
         </label>
         <label class="field">Weight (kg)
           <input type="number" step="0.1" id="f-weight" placeholder="e.g. 78.4">
@@ -992,10 +994,28 @@ td { font-family: var(--font-mono); font-size:13px; padding:6px 10px; border-bot
         <div class="card" style="flex:1;min-width:0;">
           <h2 class="eyebrow">Export data</h2>
           <p class="note" style="margin-top:0;">Download your data as CSV files.</p>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px;">
             <button type="button" class="btn" id="export-plan-btn">Export training plan</button>
             <button type="button" class="btn" id="export-weight-btn">Export weight log</button>
             <span class="note" id="export-status" style="margin:0;"></span>
+          </div>
+          <h2 class="eyebrow">App updates</h2>
+          <p class="note" style="margin-top:0;">Check for and install updates from GitHub.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+            <button type="button" class="btn" id="check-updates-btn">Check for Updates</button>
+            <span class="note" id="update-status" style="margin:0;"></span>
+          </div>
+          <div id="update-download-section" style="display:none;margin-top:10px;">
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button type="button" class="btn" id="download-update-btn">Download Update</button>
+              <button type="button" class="btn" id="install-update-btn" style="display:none;">Install & Restart</button>
+            </div>
+            <div id="update-progress" style="margin-top:8px;display:none;">
+              <div style="background:var(--line);height:8px;border-radius:4px;overflow:hidden;">
+                <div id="update-progress-bar" style="background:var(--btn-bg);height:100%;width:0%;transition:width 0.3s;"></div>
+              </div>
+              <span class="note" id="update-progress-text" style="margin-top:4px;display:block;"></span>
+            </div>
           </div>
         </div>
       </div>
@@ -4143,7 +4163,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.add('active');
     document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
     if (btn.dataset.tab === 'dashboard') renderDashboard();
-    if (btn.dataset.tab === 'weight') { document.getElementById('f-date').value = todayISO(); renderWeightDailyChart(); renderWeightChart(); renderWeightTable(); }
+    if (btn.dataset.tab === 'weight') { const today = todayISO(); document.getElementById('f-date').value = today; document.getElementById('f-date').setAttribute('max', today); renderWeightDailyChart(); renderWeightChart(); renderWeightTable(); }
     if (btn.dataset.tab === 'plan') { selectedPlanWeek = weekStartISO(todayISO()); renderPlanTab(); checkUncheckedAudaxFiles(); }
     if (btn.dataset.tab === 'log') { renderMileageChart(); renderWeekHeatmap(); }
     if (btn.dataset.tab === 'audax') { refreshAudax(); checkUncheckedAudaxFiles(); }
@@ -5909,6 +5929,49 @@ document.getElementById('reset-plan-btn').addEventListener('click', () => {
   persist();
 });
 
+document.getElementById('sync-kailo-plan-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('sync-kailo-plan-btn');
+  const origText = btn.textContent;
+  btn.textContent = 'Syncing...';
+  btn.disabled = true;
+
+  try {
+    // Load the Kailo plan data
+    const weeklyTargets = KAILO_400KM_PLAN_DATA.weeklyTargets;
+
+    // Clear existing plan
+    planRows = [];
+
+    // Convert Kailo weekly targets to RideLog planRows
+    for (const week of weeklyTargets) {
+      planRows.push({
+        weekStart: week.startDate,
+        weekNum: week.weekNum,
+        targetVol: week.volumeKm,
+        targetLong: week.longRideKm,
+        targetSat: 0,
+        phase: week.phase,
+        audax: week.phase,
+        coaching: '',
+        dailyTargets: {}
+      });
+    }
+
+    // Go to current week
+    selectedPlanWeek = weekStartISO(todayISO());
+    renderPlanTab();
+    persist();
+
+    alert(`✓ Kailo 400km Audax plan loaded!\n\n${weeklyTargets.length} weeks from ${weeklyTargets[0].startDate} to ${KAILO_400KM_PLAN_DATA.raceDate}`);
+  } catch (error) {
+    alert('Failed to sync Kailo plan: ' + error.message);
+    console.error('Kailo sync error:', error);
+  } finally {
+    btn.textContent = origText;
+    btn.disabled = false;
+  }
+});
+
 // ---------------- Mileage chart (year over year) ----------------
 let mileageChart;
 function renderMileageChart(){
@@ -6197,9 +6260,9 @@ function renderWeightDailyTable(){
       const entry = entries.find(e => e.date === date);
       if (!entry) return;
       const dayLabel = tr.querySelector('td').textContent;
-      tr.innerHTML = `<td>${dayLabel}</td><td colspan="3"><input type="number" step="0.1" min="30" max="200" value="${entry.weightKg}" style="width:70px;font-size:inherit;font-family:inherit;padding:1px 4px;"> kg <button style="margin-left:4px;padding:1px 6px;cursor:pointer;">&#10003;</button><button style="padding:1px 6px;cursor:pointer;">&#10007;</button></td>`;
+      tr.innerHTML = `<td>${dayLabel}</td><td colspan="3"><input type="number" step="0.1" min="30" max="200" value="${entry.weightKg}" style="width:70px;font-size:inherit;font-family:inherit;padding:1px 4px;"> kg <button style="margin-left:4px;padding:1px 6px;cursor:pointer;" title="Save">&#10003;</button><button style="padding:1px 6px;cursor:pointer;" title="Cancel">&#10007;</button><button style="padding:1px 6px;cursor:pointer;margin-left:8px;color:#C1442D;" title="Delete entry">&#128465;</button></td>`;
       const inp = tr.querySelector('input');
-      const [saveBtn, cancelBtn] = tr.querySelectorAll('button');
+      const [saveBtn, cancelBtn, deleteBtn] = tr.querySelectorAll('button');
       inp.focus(); inp.select();
       const save = () => {
         const val = parseFloat(inp.value);
@@ -6208,8 +6271,15 @@ function renderWeightDailyTable(){
           renderWeightDailyChart(); renderWeightChart(); renderWeightTable();
         }
       };
+      const deleteEntry = () => {
+        if (confirm(`Delete weight entry for ${dayLabel}?`)) {
+          upsertEntry(date, { weightKg: null });
+          renderWeightDailyChart(); renderWeightChart(); renderWeightTable();
+        }
+      };
       saveBtn.addEventListener('click', save);
       cancelBtn.addEventListener('click', () => renderWeightDailyTable());
+      deleteBtn.addEventListener('click', deleteEntry);
       inp.addEventListener('keydown', ev => {
         if (ev.key === 'Enter') save();
         if (ev.key === 'Escape') renderWeightDailyTable();
@@ -6219,6 +6289,12 @@ function renderWeightDailyTable(){
 }
 
 const CHANGELOG = [
+  { version: 'v1.9.27', date: '2 Aug 2026', changes: [
+    'Weight tab: added delete button (trash icon) when editing a weight entry — click any weight row to edit, then use the trash button to remove incorrect entries',
+    'Weight tab: date picker now prevents selecting future dates, and the form validates that weight entries can\'t be saved for future dates',
+    'Settings: added "Check for Updates" button that checks GitHub for newer app versions and offers to download/install them automatically',
+    'App now checks for updates on every launch and shows a notification badge if a newer version is available',
+  ]},
   { version: 'v1.9.26', date: '21 Jul 2026', changes: [
     'Audax Finder: removed the separate Filters section — Distance and event count now live in the All events header, with Month and Location tucked inside that section\'s body',
   ]},
@@ -6596,6 +6672,108 @@ function showExportStatus(msg) {
 document.getElementById('export-plan-btn').addEventListener('click', exportTrainingPlan);
 document.getElementById('export-weight-btn').addEventListener('click', exportWeightLog);
 
+// ---------------- App Updates ----------------
+let updateAvailable = false;
+let updateDownloaded = false;
+
+async function checkForUpdates() {
+  const statusEl = document.getElementById('update-status');
+  const btn = document.getElementById('check-updates-btn');
+  btn.disabled = true;
+  statusEl.textContent = 'Checking for updates...';
+
+  try {
+    const currentVersion = await window.api.getAppVersion();
+    const result = await window.api.checkForUpdates();
+
+    if (result.error) {
+      statusEl.textContent = `Error: ${result.error}`;
+      setTimeout(() => { statusEl.textContent = ''; }, 5000);
+    } else if (result.available) {
+      updateAvailable = true;
+      const newVersion = result.info.version;
+      statusEl.textContent = `Update available: v${newVersion} (current: v${currentVersion})`;
+      document.getElementById('update-download-section').style.display = 'block';
+    } else {
+      statusEl.textContent = `You're running the latest version (v${currentVersion})`;
+      setTimeout(() => { statusEl.textContent = ''; }, 5000);
+    }
+  } catch (err) {
+    statusEl.textContent = `Error: ${err.message}`;
+    setTimeout(() => { statusEl.textContent = ''; }, 5000);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function downloadUpdate() {
+  const statusEl = document.getElementById('update-status');
+  const downloadBtn = document.getElementById('download-update-btn');
+  const progressDiv = document.getElementById('update-progress');
+
+  downloadBtn.disabled = true;
+  statusEl.textContent = 'Downloading update...';
+  progressDiv.style.display = 'block';
+
+  try {
+    const result = await window.api.downloadUpdate();
+    if (result.error) {
+      statusEl.textContent = `Download failed: ${result.error}`;
+      progressDiv.style.display = 'none';
+      downloadBtn.disabled = false;
+    }
+  } catch (err) {
+    statusEl.textContent = `Download error: ${err.message}`;
+    progressDiv.style.display = 'none';
+    downloadBtn.disabled = false;
+  }
+}
+
+function installUpdate() {
+  if (confirm('The app will restart to install the update. Continue?')) {
+    window.api.installUpdate();
+  }
+}
+
+document.getElementById('check-updates-btn').addEventListener('click', checkForUpdates);
+document.getElementById('download-update-btn').addEventListener('click', downloadUpdate);
+document.getElementById('install-update-btn').addEventListener('click', installUpdate);
+
+// Listen for update events from main process
+window.api.onUpdateAvailable((info) => {
+  const statusEl = document.getElementById('update-status');
+  if (statusEl) {
+    statusEl.textContent = `Update available: v${info.version}`;
+    statusEl.style.display = 'inline';
+  }
+});
+
+window.api.onUpdateDownloadProgress((progress) => {
+  const progressBar = document.getElementById('update-progress-bar');
+  const progressText = document.getElementById('update-progress-text');
+  if (progressBar) progressBar.style.width = `${Math.round(progress.percent)}%`;
+  if (progressText) progressText.textContent = `${Math.round(progress.percent)}% (${Math.round(progress.transferred / 1024 / 1024)} MB / ${Math.round(progress.total / 1024 / 1024)} MB)`;
+});
+
+window.api.onUpdateDownloaded((info) => {
+  updateDownloaded = true;
+  const statusEl = document.getElementById('update-status');
+  const installBtn = document.getElementById('install-update-btn');
+  const downloadBtn = document.getElementById('download-update-btn');
+
+  if (statusEl) statusEl.textContent = `Update v${info.version} ready to install`;
+  if (installBtn) installBtn.style.display = 'inline-block';
+  if (downloadBtn) downloadBtn.style.display = 'none';
+});
+
+window.api.onUpdateError((error) => {
+  const statusEl = document.getElementById('update-status');
+  if (statusEl) {
+    statusEl.textContent = `Update error: ${error}`;
+    setTimeout(() => { statusEl.textContent = ''; }, 5000);
+  }
+});
+
 // ---------------- Audax finder ----------------
 function rebuildAudaxFilterOptions(){
   const distSel = document.getElementById('audax-distance');
@@ -6898,18 +7076,27 @@ rebuildAudaxFilterOptions();
 
 
 // ---------------- Form ----------------
-document.getElementById('f-date').value = todayISO();
+const today = todayISO();
+document.getElementById('f-date').value = today;
+document.getElementById('f-date').setAttribute('max', today);
 document.getElementById('entry-form').addEventListener('submit', e => {
   e.preventDefault();
   const date = document.getElementById('f-date').value;
   const wt = document.getElementById('f-weight').value;
   if (!date) return;
+  // Prevent entries in the future
+  if (date > todayISO()) {
+    alert('Cannot enter weight for a future date.');
+    return;
+  }
   const patch = {};
   if (wt !== '') patch.weightKg = parseFloat(wt);
   if (!Object.keys(patch).length) return;
   upsertEntry(date, patch);
   document.getElementById('f-weight').value = '';
-  document.getElementById('f-date').value = todayISO();
+  const newToday = todayISO();
+  document.getElementById('f-date').value = newToday;
+  document.getElementById('f-date').setAttribute('max', newToday);
   renderAll();
 });
 
