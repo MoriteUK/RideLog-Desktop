@@ -5974,8 +5974,8 @@ document.getElementById('sync-kailo-plan-btn').addEventListener('click', async (
       race_distance_mi: 248.5,
       total_weeks: 34,
       schedule: [
-        {week_number:1,focus_md:"Current fitness - build towards 200km event on Aug 23",workouts:[{planned_date:"2026-08-02",distance_mi:55},{planned_date:"2026-08-05",distance_mi:38.5},{planned_date:"2026-08-07",distance_mi:88},{planned_date:"2026-08-08",distance_mi:49.5}]},
-        {week_number:2,focus_md:"Final build week - 2 weeks to 200km event",workouts:[{planned_date:"2026-08-10",distance_mi:30},{planned_date:"2026-08-12",distance_mi:40},{planned_date:"2026-08-14",distance_mi:90},{planned_date:"2026-08-15",distance_mi:50}]},
+        {week_number:1,focus_md:"Holiday week - early morning rides only, avoid midday heat",workouts:[{planned_date:"2026-07-28",distance_mi:20},{planned_date:"2026-07-30",distance_mi:25},{planned_date:"2026-08-01",distance_mi:35},{planned_date:"2026-08-02",distance_mi:20}]},
+        {week_number:2,focus_md:"Holiday week continues - early morning rides, family priority",workouts:[{planned_date:"2026-08-04",distance_mi:25},{planned_date:"2026-08-06",distance_mi:30},{planned_date:"2026-08-08",distance_mi:40},{planned_date:"2026-08-09",distance_mi:25}]},
         {week_number:3,focus_md:"Taper week - 200km Audax on Aug 23",workouts:[{planned_date:"2026-08-17",distance_mi:25},{planned_date:"2026-08-19",distance_mi:30},{planned_date:"2026-08-21",distance_mi:20},{planned_date:"2026-08-23",distance_mi:125}]},
         {week_number:4,focus_md:"Recovery from 200km event",workouts:[{planned_date:"2026-08-26",distance_mi:20},{planned_date:"2026-08-28",distance_mi:25},{planned_date:"2026-08-29",distance_mi:35}]},
         {week_number:5,focus_md:"Return to volume - build endurance base",workouts:[{planned_date:"2026-09-01",distance_mi:22},{planned_date:"2026-09-03",distance_mi:27.5},{planned_date:"2026-09-05",distance_mi:55},{planned_date:"2026-09-06",distance_mi:38.5}]},
@@ -6418,6 +6418,11 @@ function renderWeightDailyTable(){
 }
 
 const CHANGELOG = [
+  { version: 'v1.9.32', date: '2 Aug 2026', changes: [
+    'Training Plan: Updated weeks 1-2 (Jul 27-Aug 9) for holiday - reduced volume with early morning rides to avoid heat',
+    'Training Plan: Week 1 now 110 miles (was 264km) - early rides only, family priority',
+    'Training Plan: Week 2 now 132 miles (was 231km) - morning rides, avoiding midday heat',
+  ]},
   { version: 'v1.9.31', date: '2 Aug 2026', changes: [
     'Training Plan: Fixed duplicate week of Aug 23 - event now properly in week 3 (Aug 18-24), recovery in week 4 (Aug 25-31)',
     'Training Plan: Added explicit Monday week start dates to prevent week calculation errors',

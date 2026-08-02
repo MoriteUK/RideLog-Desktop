@@ -1,6 +1,6 @@
 {
   "name": "ride-weight-log",
-  "version": "1.9.31",
+  "version": "1.9.32",
   "description": "325km x8 - Ride & Weight Log (Audax training tracker)",
   "main": "main.js",
   "repository": {
