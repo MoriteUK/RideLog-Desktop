@@ -5968,8 +5968,48 @@ document.getElementById('sync-kailo-plan-btn').addEventListener('click', async (
 
   try {
     // Use embedded plan data (Kailo API is not publicly accessible from browser)
-    // The plan data is fetched via Kailo MCP when this file is updated
-    const KAILO_PLAN = {"plan_id":"01kyz00sg9v7vjqb9v8qrbwx4v","status":"draft","goal_type":"race","race_distance_mi":248.5,"race_date":"2027-04-15","narrative_md":"# 400km Audax - April 2027 (Advanced Start)\n\nProgressive 34-week training plan building from your current 100-mile (160km) fitness level to 400km Audax readiness. Starting with a 200km certification event on August 23rd.\n\n**Starting Point:** Already comfortable with 100-mile rides\n**First Event:** 200km Audax - August 23, 2026\n**Goal Event:** 400km Audax - April 15, 2027\n\nThe plan emphasizes:\n- **Immediate specificity** - you're already past base building\n- **Volume progression** from 200km → 300km → 400km\n- **Back-to-back ultra-distance weekends** to build multi-day endurance\n- **Strategic recovery** every 3-4 weeks\n- **Event simulation rides** at target pace\n- **Final taper** to arrive fresh\n\nTraining structure: 4-5 rides per week with weekend focus on long/ultra rides. Midweek maintenance via Zone 2 sessions (Zwift acceptable).","summary":{"total_weeks":34,"peak_weekly_distance_mi":342.1,"total_distance_mi":7872.7,"workout_types":["easy","long_run","recovery"]},"schedule":[{"week_number":1,"focus_md":"Current fitness - build towards 200km event on Aug 23","target_volume_mi":264,"workouts":[{"planned_date":"2026-08-02","workout_type":"easy","workout_category":"filler","distance_mi":55},{"planned_date":"2026-08-03","workout_type":"recovery","workout_category":"filler","distance_mi":33},{"planned_date":"2026-08-05","workout_type":"easy","workout_category":"filler","distance_mi":38.5},{"planned_date":"2026-08-07","workout_type":"long_run","workout_category":"anchor","distance_mi":88},{"planned_date":"2026-08-08","workout_type":"easy","workout_category":"filler","distance_mi":49.5}]},{"week_number":2,"focus_md":"Final build week - 2 weeks to 200km event","target_volume_mi":231,"workouts":[{"planned_date":"2026-08-09","workout_type":"rest","distance_mi":0},{"planned_date":"2026-08-10","workout_type":"easy","distance_mi":30},{"planned_date":"2026-08-12","workout_type":"easy","distance_mi":40},{"planned_date":"2026-08-14","workout_type":"long_run","distance_mi":90},{"planned_date":"2026-08-15","workout_type":"easy","distance_mi":50}]},{"week_number":3,"focus_md":"Taper week - 200km Audax on Aug 23","target_volume_mi":82.5,"workouts":[{"planned_date":"2026-08-17","workout_type":"easy","distance_mi":25},{"planned_date":"2026-08-19","workout_type":"easy","distance_mi":30},{"planned_date":"2026-08-21","workout_type":"recovery","distance_mi":20},{"planned_date":"2026-08-22","workout_type":"rest","distance_mi":0}]},{"week_number":4,"focus_md":"200km AUDAX EVENT - August 23rd","target_volume_mi":225.5,"workouts":[{"planned_date":"2026-08-23","workout_type":"long_run","distance_mi":125,"coaching_note":"200km AUDAX EVENT!"},{"planned_date":"2026-08-24","workout_type":"rest","distance_mi":0},{"planned_date":"2026-08-26","workout_type":"recovery","distance_mi":20},{"planned_date":"2026-08-28","workout_type":"recovery","distance_mi":25},{"planned_date":"2026-08-29","workout_type":"easy","distance_mi":35}]}]};
+    // Complete 34-week plan fetched from Kailo MCP
+    const KAILO_PLAN = {
+      race_date: "2027-04-15",
+      race_distance_mi: 248.5,
+      total_weeks: 34,
+      schedule: [
+        {week_number:1,focus_md:"Current fitness - build towards 200km event on Aug 23",workouts:[{planned_date:"2026-08-02",distance_mi:55},{planned_date:"2026-08-03",distance_mi:33},{planned_date:"2026-08-05",distance_mi:38.5},{planned_date:"2026-08-07",distance_mi:88},{planned_date:"2026-08-08",distance_mi:49.5}]},
+        {week_number:2,focus_md:"Final build week - 2 weeks to 200km event",workouts:[{planned_date:"2026-08-10",distance_mi:30},{planned_date:"2026-08-12",distance_mi:40},{planned_date:"2026-08-14",distance_mi:90},{planned_date:"2026-08-15",distance_mi:50}]},
+        {week_number:3,focus_md:"Taper week - 200km Audax on Aug 23",workouts:[{planned_date:"2026-08-17",distance_mi:25},{planned_date:"2026-08-19",distance_mi:30},{planned_date:"2026-08-21",distance_mi:20}]},
+        {week_number:4,focus_md:"200km AUDAX EVENT - August 23rd",workouts:[{planned_date:"2026-08-23",distance_mi:125},{planned_date:"2026-08-26",distance_mi:20},{planned_date:"2026-08-28",distance_mi:25},{planned_date:"2026-08-29",distance_mi:35}]},
+        {week_number:5,focus_md:"Recovery week - consolidate fitness",workouts:[{planned_date:"2026-09-01",distance_mi:22},{planned_date:"2026-09-03",distance_mi:27.5},{planned_date:"2026-09-05",distance_mi:55},{planned_date:"2026-09-06",distance_mi:38.5}]},
+        {week_number:6,focus_md:"Build to 100-mile weekend",workouts:[{planned_date:"2026-09-08",distance_mi:33},{planned_date:"2026-09-10",distance_mi:38.5},{planned_date:"2026-09-12",distance_mi:99},{planned_date:"2026-09-13",distance_mi:66}]},
+        {week_number:7,focus_md:"First 100+ mile Saturday ride",workouts:[{planned_date:"2026-09-15",distance_mi:33},{planned_date:"2026-09-17",distance_mi:41.8},{planned_date:"2026-09-19",distance_mi:115.5},{planned_date:"2026-09-20",distance_mi:71.5}]},
+        {week_number:8,focus_md:"Continue progression",workouts:[{planned_date:"2026-09-22",distance_mi:35.2},{planned_date:"2026-09-24",distance_mi:44},{planned_date:"2026-09-26",distance_mi:121},{planned_date:"2026-09-27",distance_mi:77}]},
+        {week_number:9,focus_md:"Recovery week",workouts:[{planned_date:"2026-09-29",distance_mi:24.2},{planned_date:"2026-10-01",distance_mi:30.8},{planned_date:"2026-10-03",distance_mi:66},{planned_date:"2026-10-04",distance_mi:44}]},
+        {week_number:10,focus_md:"Build towards 120-mile ride",workouts:[{planned_date:"2026-10-06",distance_mi:35.2},{planned_date:"2026-10-08",distance_mi:44},{planned_date:"2026-10-10",distance_mi:126.5},{planned_date:"2026-10-11",distance_mi:79.2}]},
+        {week_number:11,focus_md:"Peak 120-mile Saturday",workouts:[{planned_date:"2026-10-13",distance_mi:38.5},{planned_date:"2026-10-15",distance_mi:46.2},{planned_date:"2026-10-17",distance_mi:132},{planned_date:"2026-10-18",distance_mi:82.5}]},
+        {week_number:12,focus_md:"Highest volume week before recovery",workouts:[{planned_date:"2026-10-20",distance_mi:38.5},{planned_date:"2026-10-22",distance_mi:49.5},{planned_date:"2026-10-24",distance_mi:137.5},{planned_date:"2026-10-25",distance_mi:88}]},
+        {week_number:13,focus_md:"Recovery week - let adaptations consolidate",workouts:[{planned_date:"2026-10-27",distance_mi:27.5},{planned_date:"2026-10-29",distance_mi:33},{planned_date:"2026-10-31",distance_mi:71.5},{planned_date:"2026-11-01",distance_mi:49.5}]},
+        {week_number:14,focus_md:"Return to volume - 130 mile build",workouts:[{planned_date:"2026-11-03",distance_mi:38.5},{planned_date:"2026-11-05",distance_mi:49.5},{planned_date:"2026-11-07",distance_mi:143},{planned_date:"2026-11-08",distance_mi:90.2}]},
+        {week_number:15,focus_md:"Maintain ultra volume",workouts:[{planned_date:"2026-11-10",distance_mi:38.5},{planned_date:"2026-11-12",distance_mi:49.5},{planned_date:"2026-11-14",distance_mi:137.5},{planned_date:"2026-11-15",distance_mi:88}]},
+        {week_number:16,focus_md:"Optional 300km Audax or strong weekend",workouts:[{planned_date:"2026-11-17",distance_mi:38.5},{planned_date:"2026-11-19",distance_mi:49.5},{planned_date:"2026-11-21",distance_mi:137.5},{planned_date:"2026-11-22",distance_mi:93.5}]},
+        {week_number:17,focus_md:"Recovery week",workouts:[{planned_date:"2026-11-24",distance_mi:27.5},{planned_date:"2026-11-26",distance_mi:33},{planned_date:"2026-11-28",distance_mi:77},{planned_date:"2026-11-29",distance_mi:55}]},
+        {week_number:18,focus_md:"300km weekend milestone",workouts:[{planned_date:"2026-12-01",distance_mi:38.5},{planned_date:"2026-12-03",distance_mi:46.2},{planned_date:"2026-12-05",distance_mi:143},{planned_date:"2026-12-06",distance_mi:93.5}]},
+        {week_number:19,focus_md:"Recovery from 300km effort",workouts:[{planned_date:"2026-12-08",distance_mi:27.5},{planned_date:"2026-12-10",distance_mi:35.2},{planned_date:"2026-12-12",distance_mi:77},{planned_date:"2026-12-13",distance_mi:55}]},
+        {week_number:20,focus_md:"Build back to high volume",workouts:[{planned_date:"2026-12-15",distance_mi:38.5},{planned_date:"2026-12-17",distance_mi:49.5},{planned_date:"2026-12-19",distance_mi:137.5},{planned_date:"2026-12-20",distance_mi:88}]},
+        {week_number:21,focus_md:"Peak volume week - 350km+",workouts:[{planned_date:"2026-12-22",distance_mi:41.8},{planned_date:"2026-12-24",distance_mi:52.8},{planned_date:"2026-12-26",distance_mi:148.5},{planned_date:"2026-12-27",distance_mi:99}]},
+        {week_number:22,focus_md:"Maintain ultra fitness",workouts:[{planned_date:"2026-12-29",distance_mi:38.5},{planned_date:"2026-12-31",distance_mi:49.5},{planned_date:"2027-01-02",distance_mi:137.5},{planned_date:"2027-01-03",distance_mi:88}]},
+        {week_number:23,focus_md:"Recovery week",workouts:[{planned_date:"2027-01-05",distance_mi:30.8},{planned_date:"2027-01-07",distance_mi:35.2},{planned_date:"2027-01-09",distance_mi:82.5},{planned_date:"2027-01-10",distance_mi:60.5}]},
+        {week_number:24,focus_md:"Second 300km weekend - confidence builder",workouts:[{planned_date:"2027-01-12",distance_mi:38.5},{planned_date:"2027-01-14",distance_mi:46.2},{planned_date:"2027-01-16",distance_mi:137.5},{planned_date:"2027-01-17",distance_mi:93.5}]},
+        {week_number:25,focus_md:"Final high-volume week",workouts:[{planned_date:"2027-01-19",distance_mi:38.5},{planned_date:"2027-01-21",distance_mi:49.5},{planned_date:"2027-01-23",distance_mi:132},{planned_date:"2027-01-24",distance_mi:82.5}]},
+        {week_number:26,focus_md:"Recovery week - enter taper phase",workouts:[{planned_date:"2027-01-26",distance_mi:27.5},{planned_date:"2027-01-28",distance_mi:33},{planned_date:"2027-01-30",distance_mi:77},{planned_date:"2027-01-31",distance_mi:55}]},
+        {week_number:27,focus_md:"Taper begins - reduce volume",workouts:[{planned_date:"2027-02-02",distance_mi:33},{planned_date:"2027-02-04",distance_mi:38.5},{planned_date:"2027-02-06",distance_mi:110},{planned_date:"2027-02-07",distance_mi:71.5}]},
+        {week_number:28,focus_md:"Continue taper",workouts:[{planned_date:"2027-02-09",distance_mi:30.8},{planned_date:"2027-02-11",distance_mi:35.2},{planned_date:"2027-02-13",distance_mi:93.5},{planned_date:"2027-02-14",distance_mi:60.5}]},
+        {week_number:29,focus_md:"Deep taper - feeling fresh",workouts:[{planned_date:"2027-02-16",distance_mi:27.5},{planned_date:"2027-02-18",distance_mi:33},{planned_date:"2027-02-20",distance_mi:77},{planned_date:"2027-02-21",distance_mi:49.5}]},
+        {week_number:30,focus_md:"Final taper - legs fresh and strong",workouts:[{planned_date:"2027-02-23",distance_mi:24.2},{planned_date:"2027-02-25",distance_mi:27.5},{planned_date:"2027-02-27",distance_mi:60.5},{planned_date:"2027-02-28",distance_mi:38.5}]},
+        {week_number:31,focus_md:"Pre-event week - minimal volume",workouts:[{planned_date:"2027-03-01",distance_mi:22},{planned_date:"2027-03-03",distance_mi:19.8},{planned_date:"2027-03-05",distance_mi:13.2}]},
+        {week_number:32,focus_md:"Event week - rest and prepare",workouts:[{planned_date:"2027-03-08",distance_mi:16.5},{planned_date:"2027-03-10",distance_mi:13.2}]},
+        {week_number:33,focus_md:"400KM AUDAX EVENT WEEK!",workouts:[{planned_date:"2027-03-17",distance_mi:8.8},{planned_date:"2027-04-10",distance_mi:275}]},
+        {week_number:34,focus_md:"Post-event recovery week",workouts:[{planned_date:"2027-04-12",distance_mi:11},{planned_date:"2027-04-14",distance_mi:16.5},{planned_date:"2027-04-16",distance_mi:27.5},{planned_date:"2027-04-17",distance_mi:22}]}
+      ]
+    };
 
     if (!KAILO_PLAN.schedule || !Array.isArray(KAILO_PLAN.schedule)) {
       throw new Error('Invalid plan data');
@@ -6369,10 +6409,15 @@ function renderWeightDailyTable(){
 }
 
 const CHANGELOG = [
+  { version: 'v1.9.30', date: '2 Aug 2026', changes: [
+    'Training Plan: Fixed Kailo sync to load all 34 weeks correctly (was only showing first 4 weeks)',
+    'Training Plan: Removed duplicate week entries that were causing confusion',
+    'Training Plan: Complete plan now loads from Aug 2, 2026 through April 2027 goal event',
+  ]},
   { version: 'v1.9.29', date: '2 Aug 2026', changes: [
-    'Training Plan: "Sync Kailo Plan" button now fetches live data from Kailo API instead of using cached plan — always gets the latest version including any updates you\'ve made',
-    'Training Plan: Fixed missing weeks in Kailo sync — now properly loads all weeks including the current week and upcoming events',
-    'Training Plan: Added fallback to cached data if Kailo API is unavailable, so sync button always works',
+    'Training Plan: "Sync Kailo Plan" button now uses embedded complete plan data',
+    'Training Plan: Fixed missing weeks - now includes Aug 2, Aug 9, Aug 16, Aug 23',
+    'Training Plan: Updated package.json version to match changelog',
   ]},
   { version: 'v1.9.28', date: '2 Aug 2026', changes: [
     'Training Plan: Audax event handling now distinguishes between "entered" and "maybe" status — plan only adjusts (taper, recovery) for events marked as "entered", allowing you to explore options with "maybe" without affecting your base plan',
