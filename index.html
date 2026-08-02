@@ -270,6 +270,7 @@ td { font-family: var(--font-mono); font-size:13px; padding:6px 10px; border-bot
 .fitness-table td { padding:4px 10px 4px 0; border-bottom:1px solid var(--line); }
 .fitness-table tr:last-child td { border-bottom:none; }
 .fitness-table .td-r, .fitness-table .th-r { text-align:right; }
+.fitness-two-col #climbs-card .card-body { max-height:400px; overflow-y:auto; }
 /* Dashboard — informatic screen */
 #tab-dashboard.active { display:flex; flex-direction:column; height:100%; overflow:hidden; gap:0; }
 .dash-info-screen { flex:1; min-height:0; overflow:hidden; padding:4px 0 4px; display:flex; flex-direction:column; gap:6px; }
@@ -694,29 +695,31 @@ td { font-family: var(--font-mono); font-size:13px; padding:6px 10px; border-bot
       </div>
     </div>
 
-    <div class="card" id="power-curve-card">
-      <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
-        <div class="eyebrow" style="margin:0;color:var(--muted);">Power curve (all-time bests)</div>
-        <button type="button" class="section-toggle-btn" data-section="power-curve-card" title="Collapse/expand">▾</button>
-      </div>
-      <div class="card-body">
-        <div id="ftp-suggest-banner" style="display:none;margin-bottom:10px;"></div>
-        <div id="power-curve-row" class="power-curve-row">
-          <div class="note">Loading power curve from ride data…</div>
+    <div class="fitness-two-col" style="display:flex;gap:16px;margin-bottom:16px;">
+      <div class="card" id="power-curve-card" style="flex:1;min-width:0;margin-bottom:0;">
+        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="eyebrow" style="margin:0;color:var(--muted);">Power curve (all-time bests)</div>
+          <button type="button" class="section-toggle-btn" data-section="power-curve-card" title="Collapse/expand">▾</button>
+        </div>
+        <div class="card-body">
+          <div id="ftp-suggest-banner" style="display:none;margin-bottom:10px;"></div>
+          <div id="power-curve-row" class="power-curve-row">
+            <div class="note">Loading power curve from ride data…</div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="card" id="climbs-card">
-      <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
-        <div class="eyebrow" style="margin:0;color:var(--muted);">Biggest climbs</div>
-        <button type="button" class="section-toggle-btn" data-section="climbs-card" title="Collapse/expand">▾</button>
-      </div>
-      <div class="card-body">
-        <table class="fitness-table" id="climbs-table" style="width:100%;">
-          <thead><tr><th>Date</th><th>Ride</th><th>Elev gain</th><th>Distance</th><th>Avg grade</th><th>VAM</th><th>Avg power</th></tr></thead>
-          <tbody id="climbs-table-body"><tr><td colspan="7" class="note">Loading from ride data…</td></tr></tbody>
-        </table>
+      <div class="card" id="climbs-card" style="flex:1;min-width:0;margin-bottom:0;">
+        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="eyebrow" style="margin:0;color:var(--muted);">Biggest climbs</div>
+          <button type="button" class="section-toggle-btn" data-section="climbs-card" title="Collapse/expand">▾</button>
+        </div>
+        <div class="card-body">
+          <table class="fitness-table" id="climbs-table" style="width:100%;">
+            <thead><tr><th>Date</th><th>Ride</th><th>Elev gain</th><th>Distance</th><th>Avg grade</th><th>VAM</th><th>Avg power</th></tr></thead>
+            <tbody id="climbs-table-body"><tr><td colspan="7" class="note">Loading from ride data…</td></tr></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -6549,6 +6552,12 @@ function renderWeightDailyTable(){
 }
 
 const CHANGELOG = [
+  { version: 'v1.9.37', date: '2 Aug 2026', changes: [
+    'Fitness tab: Power Curve and Biggest Climbs now side-by-side (50/50 split)',
+    'Fitness tab: Better use of screen space — see both sections at once',
+    'Fitness tab: Biggest Climbs table scrollable (max 400px height) to prevent overflow',
+    'Fitness tab: Both sections remain collapsible with ▾/▸ buttons',
+  ]},
   { version: 'v1.9.36', date: '2 Aug 2026', changes: [
     'Fix: All tabs now use full available width (changed .tab-panel.active to use flex layout)',
     'UI: Settings now has expandable submenu like Data section',
