@@ -615,17 +615,31 @@ td { font-family: var(--font-mono); font-size:13px; padding:6px 10px; border-bot
       </div>
     </div>
 
-    <div class="eyebrow" style="margin:0 0 6px;color:var(--muted);">Power curve (all-time bests)</div>
-    <div id="ftp-suggest-banner" style="display:none;margin-bottom:10px;"></div>
-    <div id="power-curve-row" class="power-curve-row" style="margin-bottom:14px;">
-      <div class="note">Loading power curve from ride data…</div>
+    <div class="card" id="power-curve-card">
+      <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="eyebrow" style="margin:0;color:var(--muted);">Power curve (all-time bests)</div>
+        <button type="button" class="section-toggle-btn" data-section="power-curve-card" title="Collapse/expand">▾</button>
+      </div>
+      <div class="card-body">
+        <div id="ftp-suggest-banner" style="display:none;margin-bottom:10px;"></div>
+        <div id="power-curve-row" class="power-curve-row">
+          <div class="note">Loading power curve from ride data…</div>
+        </div>
+      </div>
     </div>
 
-    <div class="eyebrow" style="margin:0 0 6px;color:var(--muted);">Biggest climbs</div>
-    <table class="fitness-table" id="climbs-table" style="width:100%;margin-bottom:14px;">
-      <thead><tr><th>Date</th><th>Ride</th><th>Elev gain</th><th>Distance</th><th>Avg grade</th><th>VAM</th><th>Avg power</th></tr></thead>
-      <tbody id="climbs-table-body"><tr><td colspan="7" class="note">Loading from ride data…</td></tr></tbody>
-    </table>
+    <div class="card" id="climbs-card">
+      <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="eyebrow" style="margin:0;color:var(--muted);">Biggest climbs</div>
+        <button type="button" class="section-toggle-btn" data-section="climbs-card" title="Collapse/expand">▾</button>
+      </div>
+      <div class="card-body">
+        <table class="fitness-table" id="climbs-table" style="width:100%;">
+          <thead><tr><th>Date</th><th>Ride</th><th>Elev gain</th><th>Distance</th><th>Avg grade</th><th>VAM</th><th>Avg power</th></tr></thead>
+          <tbody id="climbs-table-body"><tr><td colspan="7" class="note">Loading from ride data…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
 
     <div class="eyebrow" style="margin:0 0 6px;color:var(--muted);">Body &amp; health</div>
     <div class="body-health-row" style="display:flex;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;gap:10px;margin-bottom:14px;flex-shrink:0;padding-bottom:4px;">
@@ -6418,6 +6432,11 @@ function renderWeightDailyTable(){
 }
 
 const CHANGELOG = [
+  { version: 'v1.9.33', date: '2 Aug 2026', changes: [
+    'Fitness tab: Added collapsible sections (▾/▸ buttons) for Power Curve and Biggest Climbs — same as Audax tab',
+    'Fitness tab: Biggest Climbs section now starts collapsed by default so Power Curve is visible',
+    'Fitness tab: Click the arrow button to expand/collapse sections — state is remembered between sessions',
+  ]},
   { version: 'v1.9.32', date: '2 Aug 2026', changes: [
     'Training Plan: Updated weeks 1-2 (Jul 27-Aug 9) for holiday - reduced volume with early morning rides to avoid heat',
     'Training Plan: Week 1 now 110 miles (was 264km) - early rides only, family priority',
@@ -7208,6 +7227,30 @@ document.querySelectorAll('#tab-audax .section-toggle-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     localStorage.setItem('audaxCollapsed:' + id, isAudaxSectionCollapsed(id) ? '0' : '1');
     applyAudaxSectionState(id);
+  });
+});
+
+// Fitness tab collapsible sections
+const FITNESS_SECTION_DEFAULTS = { 'climbs-card': true }; // Climbs collapsed by default
+function isFitnessSectionCollapsed(id) {
+  const v = localStorage.getItem('fitnessCollapsed:' + id);
+  if (v === null) return !!FITNESS_SECTION_DEFAULTS[id];
+  return v === '1';
+}
+function applyFitnessSectionState(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const collapsed = isFitnessSectionCollapsed(id);
+  el.classList.toggle('section-collapsed', collapsed);
+  const btn = el.querySelector('.section-toggle-btn');
+  if (btn) btn.textContent = collapsed ? '▸' : '▾';
+}
+document.querySelectorAll('#tab-fitness .section-toggle-btn').forEach(btn => {
+  const id = btn.dataset.section;
+  applyFitnessSectionState(id);
+  btn.addEventListener('click', () => {
+    localStorage.setItem('fitnessCollapsed:' + id, isFitnessSectionCollapsed(id) ? '0' : '1');
+    applyFitnessSectionState(id);
   });
 });
 
