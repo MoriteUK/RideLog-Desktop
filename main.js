@@ -771,6 +771,8 @@ ipcMain.handle('strava-sync', async (event, creds) => {
         startLatLng: a.start_latlng || null,
         endLatLng: a.end_latlng || null,
         hasStreams: streamsExist(a.id),
+        prCount: a.pr_count || 0,
+        achievementCount: a.achievement_count || 0,
       });
     });
 
@@ -787,6 +789,76 @@ ipcMain.handle('strava-sync', async (event, creds) => {
       streamsFetched: streamResult.fetchedIds.size,
       streamsRemaining: streamResult.remaining,
       streamsRateLimited: streamResult.rateLimited,
+    };
+  } catch (err) {
+    return { error: err.message };
+  }
+});
+
+// RideWithGPS sync
+ipcMain.handle('rwgps-sync', async (event, { email, apiKey }) => {
+  try {
+    const since = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10); // last year
+    const url = `https://ridewithgps.com/users/${encodeURIComponent(email)}/trips.json?apikey=${encodeURIComponent(apiKey)}&offset=0&limit=200&updated_since=${since}`;
+
+    const res = await fetch(url, {
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if (!res.ok) {
+      return { error: `RideWithGPS API error ${res.status}: ${await res.text()}` };
+    }
+
+    const data = await res.json();
+
+    if (!data.results || !Array.isArray(data.results)) {
+      return { error: 'Invalid response from RideWithGPS API' };
+    }
+
+    const rides = data.results.map(trip => ({
+      id: trip.id,
+      date: trip.departed_at ? trip.departed_at.slice(0, 10) : (trip.created_at || '').slice(0, 10),
+      name: trip.name || 'Untitled ride',
+      distance: trip.distance ? Math.round(trip.distance / 1000 * 10) / 10 : 0, // meters to km
+      tss: trip.training_stress_score || 0,
+      elevGain: trip.elevation_gain || 0,
+      movingTime: trip.moving_time || 0,
+    }));
+
+    return { rides, recordCount: rides.length };
+  } catch (err) {
+    return { error: err.message };
+  }
+});
+
+// Fetch detailed segment efforts for a specific activity
+ipcMain.handle('strava-activity-details', async (event, { activityId, accessToken }) => {
+  try {
+    const res = await fetch(
+      `https://www.strava.com/api/v3/activities/${activityId}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    if (!res.ok) {
+      return { error: `Strava API error ${res.status}: ${await res.text()}` };
+    }
+    const activity = await res.json();
+
+    // Extract segment efforts with achievement info
+    const efforts = (activity.segment_efforts || []).map(e => ({
+      name: e.name,
+      distance: e.distance,
+      elapsedTime: e.elapsed_time,
+      movingTime: e.moving_time,
+      achievementType: e.achievements && e.achievements.length > 0 ? e.achievements[0].type_id : null,
+      rank: e.achievements && e.achievements.length > 0 ? e.achievements[0].rank : null,
+      prRank: e.pr_rank || null,
+      komRank: e.kom_rank || null,
+    }));
+
+    return {
+      segmentEfforts: efforts,
+      prCount: activity.pr_count || 0,
+      achievementCount: activity.achievement_count || 0,
     };
   } catch (err) {
     return { error: err.message };

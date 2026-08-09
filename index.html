@@ -825,6 +825,7 @@ td { font-family: var(--font-mono); font-size:13px; padding:6px 10px; border-bot
             <th data-sort="movingTime">Time</th><th data-sort="avgHr">Avg HR</th><th data-sort="maxHr">Max HR</th>
             <th data-sort="np">NP</th><th data-sort="avgWatts">Avg W</th><th data-sort="avgCadence">Cad</th>
             <th data-sort="elevGainM">Elev</th><th data-sort="sufferScore">Effort</th>
+            <th data-sort="prCount" title="Personal Records / Achievements">PRs</th>
           </tr>
         </thead>
         <tbody id="rides-tbody"></tbody>
@@ -978,6 +979,24 @@ td { font-family: var(--font-mono); font-size:13px; padding:6px 10px; border-bot
           </div>
         </div>
         <div class="card" style="width:300px;flex-shrink:0;">
+          <h2 class="eyebrow">RideWithGPS</h2>
+          <p class="note" style="margin-top:0;">Pull rides from RideWithGPS. Get your API key from ridewithgps.com/account → Apps & API.</p>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <label class="field">Email
+              <input type="email" id="rwgps-email" placeholder="you@example.com" style="width:100%;">
+            </label>
+            <label class="field">API Key
+              <input type="password" id="rwgps-apikey" placeholder="your API key" style="width:100%;">
+            </label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;">
+              <button type="button" class="btn" id="rwgps-save-btn">Save</button>
+              <button type="button" class="btn" id="rwgps-sync-btn">Sync now</button>
+              <button type="button" class="btn" id="rwgps-clear-btn">Clear</button>
+            </div>
+            <span class="note" id="rwgps-status" style="margin:4px 0 0;display:block;"></span>
+          </div>
+        </div>
+        <div class="card" style="width:300px;flex-shrink:0;">
           <h2 class="eyebrow">Outlook Calendar</h2>
           <p class="note" style="margin-top:0;">Connect one or more Microsoft 365 accounts to pull meetings from all of them into the schedule grid.</p>
           <p class="note" style="margin-top:0;">Find your Tenant ID in Azure Portal → App Registration → Overview → <em>Directory (tenant) ID</em>.</p>
@@ -1069,6 +1088,16 @@ td { font-family: var(--font-mono); font-size:13px; padding:6px 10px; border-bot
         <div class="card" style="flex:2;min-width:0;">
           <h2 class="eyebrow">Component mileage</h2>
           <p class="note" style="margin-top:0;">Track when you last replaced key parts. Km since reset is calculated from your total lifetime distance.</p>
+          <div style="margin-bottom:10px;">
+            <label class="field">Bike
+              <select id="comp-bike-sel" style="font-family:var(--font-mono);font-size:13px;width:140px;">
+                <option>Audax</option>
+                <option>Mallorca</option>
+                <option>V2RS</option>
+                <option>Turbo</option>
+              </select>
+            </label>
+          </div>
           <div id="components-list" style="margin-bottom:10px;"></div>
           <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px;">
             <label class="field">Component
@@ -1081,6 +1110,13 @@ td { font-family: var(--font-mono); font-size:13px; padding:6px 10px; border-bot
                 <option>Bar tape</option>
                 <option>Cables &amp; housing</option>
                 <option>Cleats</option>
+              </select>
+            </label>
+            <label class="field" id="comp-shoe-sel-wrapper" style="display:none;">Shoes
+              <select id="comp-shoe-sel" style="font-family:var(--font-mono);font-size:13px;width:140px;">
+                <option>Mallorca</option>
+                <option>Road</option>
+                <option>SPD</option>
               </select>
             </label>
             <button type="button" class="btn" id="comp-reset-btn">Reset now</button>
@@ -1162,6 +1198,15 @@ td { font-family: var(--font-mono); font-size:13px; padding:6px 10px; border-bot
         <label>Weight (kg)
           <input type="number" step="0.1" id="summary-edit-weight">
         </label>
+        <label>Bike
+          <select id="summary-edit-bike" style="font-family:var(--font-mono);font-size:13px;">
+            <option value="">None</option>
+            <option>Audax</option>
+            <option>Mallorca</option>
+            <option>V2RS</option>
+            <option>Turbo</option>
+          </select>
+        </label>
         <div class="note" style="padding-bottom:6px;">Edits update the underlying log entry used by the tiles.</div>
         <button type="button" class="btn" id="summary-edit-save">Save</button>
         <button type="button" class="btn" id="summary-edit-clear">Clear</button>
@@ -1229,6 +1274,10 @@ td { font-family: var(--font-mono); font-size:13px; padding:6px 10px; border-bot
       <button type="button" class="summary-modal-close" id="ride-modal-close">Close</button>
     </div>
     <div class="summary-grid" id="ride-modal-kpis" style="margin-bottom:12px;"></div>
+    <div class="card" id="ride-modal-achievements-card" style="margin-bottom:12px;padding:12px 14px;display:none;">
+      <div class="eyebrow" style="margin-bottom:8px;">Strava Records</div>
+      <div id="ride-modal-achievements-content"></div>
+    </div>
     <div class="card" id="ride-modal-route-card" style="margin-bottom:12px;padding:12px 14px;display:none;">
       <div style="height:240px;border-radius:3px;overflow:hidden;" id="ride-modal-route-map"></div>
       <div style="display:flex;justify-content:flex-end;margin-top:8px;">
@@ -1344,6 +1393,7 @@ let whoop = { clientId: '', clientSecret: '', accessToken: '', refreshToken: '',
 let whoopData = {}; // { [YYYY-MM-DD]: { hrv, rhr, recoveryScore, spo2 } }
 let garmin = { username: '', password: '', lastSync: null };
 let garminBodyData = {}; // { [YYYY-MM-DD]: { bodyWater, bodyFat, muscleMass, boneMass } }
+let rwgps = { email: '', apiKey: '', lastSync: null };
 let scheduleBlocks = {}; // { [weekStart]: boolean[7][32] } — 7 days × 32 half-hour slots (06:00–22:00)
 let outlookBlocks  = {}; // { [weekStart]: { busy: boolean[7][32], labels: (string|null)[7][32] } } — fetched from Outlook, not persisted
 let schedWeekStart   = '';
@@ -3096,7 +3146,7 @@ document.getElementById('tab-dashboard').addEventListener('click', e => {
 });
 
 function buildSaveData() {
-  return {entries, planRows, milestones, strava, whoop, whoopData, garmin, garminBodyData, myAudaxEvents, audaxElevCache, audaxFileCache, activityDetails, ftp, ftpHistory, height, holidayWeeks, scheduleBlocks, msAccounts, audaxUK, components, checklistState};
+  return {entries, planRows, milestones, strava, whoop, whoopData, garmin, garminBodyData, rwgps, myAudaxEvents, audaxElevCache, audaxFileCache, activityDetails, ftp, ftpHistory, height, holidayWeeks, scheduleBlocks, msAccounts, audaxUK, components, checklistState};
 }
 function persist() {
   window.api.saveData(buildSaveData());
@@ -3154,6 +3204,7 @@ async function pullFromOneDrive() {
   if (d.whoopData)      whoopData      = d.whoopData;
   if (d.garmin)         garmin         = d.garmin;
   if (d.garminBodyData) garminBodyData = d.garminBodyData;
+  if (d.rwgps)          rwgps          = d.rwgps;
   if (d.myAudaxEvents)  myAudaxEvents  = d.myAudaxEvents;
   if (d.audaxElevCache) audaxElevCache = d.audaxElevCache;
   if (d.audaxFileCache) audaxFileCache = d.audaxFileCache;
@@ -3868,6 +3919,7 @@ function renderSummaryDetail(){
     document.getElementById('summary-edit-date').value = summaryEditDate || (wRows[0] ? wRows[0].date : todayISO());
     document.getElementById('summary-edit-distance').value = '';
     document.getElementById('summary-edit-weight').value = '';
+    document.getElementById('summary-edit-bike').value = '';
     document.querySelectorAll('#summary-modal-body [data-edit-date]').forEach(btn => {
       btn.addEventListener('click', () => {
         const edit = entries.find(e => e.date === btn.dataset.editDate);
@@ -3876,6 +3928,7 @@ function renderSummaryDetail(){
         document.getElementById('summary-edit-date').value = edit.date;
         document.getElementById('summary-edit-distance').value = edit.distanceKm != null ? edit.distanceKm : '';
         document.getElementById('summary-edit-weight').value = edit.weightKg != null ? edit.weightKg : '';
+        document.getElementById('summary-edit-bike').value = edit.bike || '';
       });
     });
     document.querySelectorAll('#summary-modal-body [data-delete-date]').forEach(btn => {
@@ -3915,6 +3968,7 @@ function renderSummaryDetail(){
   document.getElementById('summary-edit-date').value = summaryEditDate || (rows[0] ? rows[0].date : todayISO());
   document.getElementById('summary-edit-distance').value = '';
   document.getElementById('summary-edit-weight').value = '';
+  document.getElementById('summary-edit-bike').value = '';
 
   document.querySelectorAll('#summary-modal-body [data-edit-date]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -3924,6 +3978,7 @@ function renderSummaryDetail(){
       document.getElementById('summary-edit-date').value = edit.date;
       document.getElementById('summary-edit-distance').value = edit.distanceKm != null ? edit.distanceKm : '';
       document.getElementById('summary-edit-weight').value = edit.weightKg != null ? edit.weightKg : '';
+      document.getElementById('summary-edit-bike').value = edit.bike || '';
     });
   });
 
@@ -3971,7 +4026,10 @@ function renderRidesTable() {
     return 0;
   });
   document.getElementById('rides-count').textContent = `${rows.length} of ${activityDetails.length} rides`;
-  document.getElementById('rides-tbody').innerHTML = rows.map(a => `
+  document.getElementById('rides-tbody').innerHTML = rows.map(a => {
+    const prCount = (a.prCount || 0) + (a.achievementCount || 0);
+    const prDisplay = prCount > 0 ? `<span style="color:var(--gold);font-weight:600;" title="${a.prCount || 0} PRs, ${a.achievementCount || 0} achievements">${prCount}</span>` : '—';
+    return `
     <tr data-ride-id="${a.id}" style="cursor:pointer;">
       <td>${dispDate(a.date)}</td>
       <td>${a.name || ''}${a.hasStreams ? ' <span title="Detailed HR/power/cadence data available" style="color:var(--red);">●</span>' : ''}</td>
@@ -3984,7 +4042,9 @@ function renderRidesTable() {
       <td>${a.avgCadence != null ? a.avgCadence : '—'}</td>
       <td>${a.elevGainM != null ? a.elevGainM + 'm' : '—'}</td>
       <td>${a.sufferScore != null ? a.sufferScore : '—'}</td>
-    </tr>`).join('');
+      <td>${prDisplay}</td>
+    </tr>`;
+  }).join('');
   document.querySelectorAll('#rides-tbody tr').forEach(tr => {
     tr.addEventListener('click', () => openRideDetail(tr.dataset.rideId));
   });
@@ -4112,6 +4172,53 @@ async function openRideDetail(id, extraSameDayCount) {
   document.getElementById('ride-modal-kpis').innerHTML = kpis.map(k =>
     `<div class="summary-card"><div class="eyebrow">${k.label}</div><div class="summary-value" style="font-size:16px;">${k.value}</div></div>`
   ).join('');
+
+  // Fetch and display Strava achievements/PRs
+  const achievementsCard = document.getElementById('ride-modal-achievements-card');
+  const achievementsContent = document.getElementById('ride-modal-achievements-content');
+  if (strava.accessToken && (a.prCount > 0 || a.achievementCount > 0)) {
+    achievementsCard.style.display = '';
+    achievementsContent.innerHTML = '<p class="note" style="margin:0;">Loading records...</p>';
+
+    window.api.stravaActivityDetails({ activityId: a.id, accessToken: strava.accessToken }).then(result => {
+      if (result.error) {
+        achievementsContent.innerHTML = `<p class="note" style="margin:0;color:var(--muted);">Could not load records: ${result.error}</p>`;
+        return;
+      }
+
+      const efforts = result.segmentEfforts || [];
+      const prEfforts = efforts.filter(e => e.prRank || e.achievementType);
+
+      if (prEfforts.length === 0) {
+        achievementsContent.innerHTML = '<p class="note" style="margin:0;color:var(--muted);">No segment records found.</p>';
+        return;
+      }
+
+      achievementsContent.innerHTML = `<table class="fitness-table" style="width:100%;margin:0;">
+        <thead><tr><th>Segment</th><th>Distance</th><th>Time</th><th>Achievement</th></tr></thead>
+        <tbody>${prEfforts.map(e => {
+          const distKm = (e.distance / 1000).toFixed(1);
+          const time = fmtDuration(e.movingTime || e.elapsedTime);
+          let achievement = '';
+          if (e.achievementType === 1) achievement = '<span style="color:var(--gold);font-weight:600;">🥇 1st place</span>';
+          else if (e.achievementType === 2) achievement = '<span style="color:var(--muted);font-weight:600;">🥈 2nd place</span>';
+          else if (e.achievementType === 3) achievement = '<span style="color:#cd7f32;font-weight:600;">🥉 3rd place</span>';
+          else if (e.prRank === 1) achievement = '<span style="color:var(--teal);font-weight:600;">⭐ PR</span>';
+          else if (e.prRank <= 3) achievement = `<span style="color:var(--teal);">PR (${e.prRank})</span>`;
+          else if (e.komRank && e.komRank <= 10) achievement = `<span style="color:var(--muted);">Top ${e.komRank}</span>`;
+
+          return `<tr>
+            <td>${e.name}</td>
+            <td>${distKm} km</td>
+            <td>${time}</td>
+            <td>${achievement}</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>`;
+    });
+  } else {
+    achievementsCard.style.display = 'none';
+  }
 
   const chartCard = document.getElementById('ride-modal-chart-card');
   const noData = document.getElementById('ride-modal-nodata');
@@ -4322,6 +4429,7 @@ document.getElementById('summary-edit-clear').addEventListener('click', () => {
   document.getElementById('summary-edit-date').value = summaryEditDate || todayISO();
   document.getElementById('summary-edit-distance').value = '';
   document.getElementById('summary-edit-weight').value = '';
+  document.getElementById('summary-edit-bike').value = '';
   summaryEditDate = '';
 });
 document.getElementById('summary-edit-save').addEventListener('click', () => {
@@ -4329,9 +4437,11 @@ document.getElementById('summary-edit-save').addEventListener('click', () => {
   if (!date) return;
   const distanceRaw = document.getElementById('summary-edit-distance').value;
   const weightRaw = document.getElementById('summary-edit-weight').value;
+  const bikeRaw = document.getElementById('summary-edit-bike').value;
   const patch = {};
   if (distanceRaw !== '') patch.distanceKm = parseFloat(distanceRaw);
   if (weightRaw !== '') patch.weightKg = parseFloat(weightRaw);
+  if (bikeRaw !== '') patch.bike = bikeRaw;
   if (!Object.keys(patch).length) return;
   if (summaryEditDate && summaryEditDate !== date) removeEntry(summaryEditDate);
   upsertEntry(date, patch);
@@ -4341,6 +4451,7 @@ document.getElementById('summary-edit-save').addEventListener('click', () => {
   renderMileageChart();
   renderWeightDailyChart(); renderWeightChart();
   renderWeightTable();
+  renderComponents();
 });
 
 // ---------------- Strava ----------------
@@ -4452,6 +4563,76 @@ document.getElementById('garmin-sync-btn').addEventListener('click', async () =>
   renderWeightChart();
   renderWeightTable();
   renderDashboard();
+});
+
+// ---------------- RideWithGPS ----------------
+function loadRwgpsForm() {
+  document.getElementById('rwgps-email').value = rwgps.email || '';
+  document.getElementById('rwgps-apikey').value = rwgps.apiKey || '';
+  document.getElementById('rwgps-status').textContent = rwgps.lastSync
+    ? `Last synced: ${rwgps.lastSync}` : '';
+}
+
+document.getElementById('rwgps-save-btn').addEventListener('click', () => {
+  rwgps.email = document.getElementById('rwgps-email').value.trim();
+  rwgps.apiKey = document.getElementById('rwgps-apikey').value.trim();
+  persist();
+  document.getElementById('rwgps-status').textContent = 'Credentials saved.';
+});
+
+document.getElementById('rwgps-clear-btn').addEventListener('click', () => {
+  rwgps.email = '';
+  rwgps.apiKey = '';
+  rwgps.lastSync = null;
+  document.getElementById('rwgps-email').value = '';
+  document.getElementById('rwgps-apikey').value = '';
+  persist();
+  loadRwgpsForm();
+  document.getElementById('rwgps-status').textContent = 'Credentials cleared.';
+});
+
+document.getElementById('rwgps-sync-btn').addEventListener('click', async () => {
+  const status = document.getElementById('rwgps-status');
+  if (!rwgps.email || !rwgps.apiKey) {
+    status.textContent = 'Enter email and API key first';
+    return;
+  }
+  status.textContent = 'Syncing RideWithGPS…';
+  const result = await window.api.rwgpsSync({ email: rwgps.email, apiKey: rwgps.apiKey });
+  if (result.error) {
+    status.textContent = 'Sync failed: ' + result.error;
+    return;
+  }
+  if (result.rides && result.rides.length > 0) {
+    let added = 0;
+    for (const ride of result.rides) {
+      const existing = entries.find(e => e.rwgpsId === ride.id);
+      if (!existing) {
+        entries.push({
+          date: ride.date,
+          dist: ride.distance,
+          tss: ride.tss || 0,
+          weight: 0,
+          notes: ride.name || '',
+          rwgpsId: ride.id
+        });
+        added++;
+      }
+    }
+    entries.sort((a, b) => a.date.localeCompare(b.date));
+    rwgps.lastSync = new Date().toISOString().slice(0, 16).replace('T', ' ');
+    persist();
+    loadRwgpsForm();
+    status.textContent = `Synced ${result.rides.length} rides, added ${added} new`;
+    renderRideTable();
+    renderWeightTable();
+    renderDashboard();
+  } else {
+    rwgps.lastSync = new Date().toISOString().slice(0, 16).replace('T', ' ');
+    persist();
+    loadRwgpsForm();
+    status.textContent = 'Sync complete — no new rides found';
+  }
 });
 
 // ---------------- Audax UK credentials ----------------
@@ -4967,46 +5148,95 @@ document.getElementById('milestone-form').addEventListener('submit', e => {
 
 
 // ---------------- Component mileage tracker ----------------
+// Calculate total km for a specific bike
+function computeBikeKm(bike) {
+  return entries
+    .filter(e => e.bike === bike && e.distanceKm)
+    .reduce((sum, e) => sum + e.distanceKm, 0);
+}
+
 function renderComponents() {
   const el = document.getElementById('components-list');
   if (!el) return;
-  const totalKm = computeTotalKm();
-  if (!components.length) {
-    el.innerHTML = '<p class="note" style="margin:0 0 4px;">No components tracked yet. Select a component below and click Reset now to start tracking.</p>';
+  const selectedBike = document.getElementById('comp-bike-sel')?.value || 'Audax';
+
+  // Filter components for selected bike (including cleats with shoes)
+  const bikeComponents = components.filter(c => c.bike === selectedBike);
+
+  if (!bikeComponents.length) {
+    el.innerHTML = '<p class="note" style="margin:0 0 4px;">No components tracked for this bike yet. Select a component below and click Reset now to start tracking.</p>';
     return;
   }
+
   el.innerHTML = `<table class="fitness-table" style="width:100%;margin-bottom:0;">
     <thead><tr><th>Component</th><th>Reset on</th><th class="td-r">Km since reset</th><th></th></tr></thead>
-    <tbody>${components.map((c, i) => {
-      const kmOn = Math.round(totalKm - c.resetKm);
-      const warn = c.name === 'Chain' ? 2500 : c.name.includes('tyre') ? 5000 : c.name.includes('Brake') ? 3000 : 0;
+    <tbody>${bikeComponents.map((c) => {
+      const bikeKm = computeBikeKm(selectedBike);
+      const kmOn = Math.round(bikeKm - c.resetKm);
+      const warn = c.name === 'Chain' ? 2500 : c.name.includes('tyre') ? 5000 : c.name.includes('Brake') ? 3000 : c.name === 'Cleats' ? 5000 : 0;
       const clr = warn && kmOn > warn ? 'var(--red)' : warn && kmOn > warn * 0.75 ? 'var(--gold)' : 'var(--teal)';
       const warnTip = warn ? ` (typical interval: ~${warn.toLocaleString()} km)` : '';
-      return `<tr><td>${c.name}</td><td>${dispDate(c.resetDate)}</td>
+      const displayName = c.shoe ? `${c.name} (${c.shoe})` : c.name;
+      return `<tr><td>${displayName}</td><td>${dispDate(c.resetDate)}</td>
         <td class="td-r" style="color:${clr};font-weight:600;" title="${kmOn.toLocaleString()} km on this component${warnTip}">${kmOn.toLocaleString()} km</td>
-        <td><button class="btn-subtle" data-comp-del="${i}">Remove</button></td></tr>`;
+        <td><button class="btn-subtle" data-comp-del="${c.bike}|||${c.name}|||${c.shoe||''}">Remove</button></td></tr>`;
     }).join('')}</tbody>
   </table>`;
+
   el.querySelectorAll('[data-comp-del]').forEach(btn => {
     btn.addEventListener('click', () => {
-      components.splice(parseInt(btn.dataset.compDel), 1);
+      const [bike, name, shoe] = btn.dataset.compDel.split('|||');
+      components = components.filter(c => !(c.bike === bike && c.name === name && (c.shoe || '') === shoe));
       persist();
       renderComponents();
     });
   });
 }
 
+// Component selector change listener - show/hide shoe selector
+document.getElementById('comp-name-sel')?.addEventListener('change', (e) => {
+  const shoeWrapper = document.getElementById('comp-shoe-sel-wrapper');
+  if (e.target.value === 'Cleats') {
+    shoeWrapper.style.display = 'block';
+  } else {
+    shoeWrapper.style.display = 'none';
+  }
+});
+
+// Bike selector change listener
+document.getElementById('comp-bike-sel')?.addEventListener('change', () => {
+  renderComponents();
+});
+
 document.getElementById('comp-reset-btn').addEventListener('click', () => {
   const name = document.getElementById('comp-name-sel').value;
-  if (!name) return;
-  const totalKm = computeTotalKm();
-  components = components.filter(c => c.name !== name);
-  components.push({ name, resetKm: totalKm, resetDate: todayISO() });
-  components.sort((a, b) => a.name.localeCompare(b.name));
+  const bike = document.getElementById('comp-bike-sel').value;
+  const shoe = name === 'Cleats' ? document.getElementById('comp-shoe-sel').value : null;
+  if (!name || !bike) return;
+  if (name === 'Cleats' && !shoe) return;
+
+  const bikeKm = computeBikeKm(bike);
+
+  // Remove existing component for this bike (and shoe if applicable)
+  components = components.filter(c => !(c.bike === bike && c.name === name && (c.shoe || null) === shoe));
+
+  // Add new component with bike info and shoe if applicable
+  const newComponent = { bike, name, resetKm: bikeKm, resetDate: todayISO() };
+  if (shoe) newComponent.shoe = shoe;
+
+  components.push(newComponent);
+  components.sort((a, b) => {
+    const bikeComp = a.bike.localeCompare(b.bike);
+    if (bikeComp !== 0) return bikeComp;
+    const nameComp = a.name.localeCompare(b.name);
+    if (nameComp !== 0) return nameComp;
+    return (a.shoe || '').localeCompare(b.shoe || '');
+  });
   persist();
   renderComponents();
   const s = document.getElementById('comp-status');
-  s.textContent = name + ' reset at ' + Math.round(totalKm).toLocaleString() + ' km total';
+  const displayName = shoe ? `${name} (${shoe})` : name;
+  s.textContent = displayName + ' reset for ' + bike + ' at ' + Math.round(bikeKm).toLocaleString() + ' km';
   setTimeout(() => { s.textContent = ''; }, 3000);
 });
 
@@ -7564,6 +7794,7 @@ async function init(){
     whoopData = loaded.whoopData || {};
     garmin = loaded.garmin || garmin;
     garminBodyData = loaded.garminBodyData || {};
+    rwgps = loaded.rwgps || rwgps;
     if (ftp) document.getElementById('ftp-input').value = ftp;
     document.getElementById('height-input').value = height;
     renderFtpHistory();
@@ -7571,6 +7802,7 @@ async function init(){
     renderComponents();
     loadWhoopForm();
     loadGarminForm();
+    loadRwgpsForm();
     loadOutlookSettings();
     loadAudaxUKForm();
     if (audaxUK.username) window.api.setAudaxCreds(audaxUK);
