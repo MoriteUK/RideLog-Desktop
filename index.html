@@ -243,6 +243,8 @@ td { font-family: var(--font-mono); font-size:13px; padding:6px 10px; border-bot
 .audax-file-btn { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 3px; cursor: pointer; background: rgba(62,110,99,0.12); color: var(--teal); border: 1px solid rgba(62,110,99,0.30); white-space: nowrap; line-height: 1.7; }
 .audax-file-btn:hover { background: var(--teal); color: #fff; }
 .audax-file-btn:disabled { opacity: 0.5; cursor: default; }
+.audax-file-btn.rwgps-uploaded { background: rgba(37,99,235,0.12); color: #2563eb; border: 1px solid rgba(37,99,235,0.30); }
+.audax-file-btn.rwgps-uploaded:hover { background: #2563eb; color: #fff; }
 .audax-check-note { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
 .my-events-table { width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:11px; }
 .my-events-table th { text-align:left; font-size:9px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); padding:3px 6px 3px 0; border-bottom:1px solid var(--line); }
@@ -1440,7 +1442,35 @@ async function handleAudaxFileDownload(btn) {
     setTimeout(() => { btn.textContent = orig; btn.disabled = false; btn.title = ''; }, 3000);
   } else {
     btn.textContent = '✓ Saved';
-    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2500);
+
+    // If it's a GPX file and RideWithGPS is configured, upload it
+    if (result.ext === '.gpx' && rwgps.email && rwgps.apiKey) {
+      setTimeout(async () => {
+        btn.textContent = '⬆ RWGPS…';
+        const uploadResult = await window.api.rwgpsUploadRoute({
+          email: rwgps.email,
+          apiKey: rwgps.apiKey,
+          gpxPath: result.path,
+          routeName: eventName || fileName
+        });
+
+        if (uploadResult.ok) {
+          btn.textContent = '✓ RWGPS';
+          btn.title = `Uploaded to RideWithGPS - Click to view`;
+          btn.dataset.rwgpsUrl = uploadResult.url;
+          btn.classList.add('rwgps-uploaded');
+          setTimeout(() => {
+            btn.textContent = orig;
+            btn.disabled = false;
+          }, 3000);
+        } else {
+          btn.textContent = '✓ Saved';
+          setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
+        }
+      }, 1000);
+    } else {
+      setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2500);
+    }
   }
 }
 
@@ -7747,18 +7777,39 @@ document.getElementById('tab-plan').addEventListener('click', e => {
   const btn = e.target.closest('.audax-file-btn');
   if (!btn || btn.disabled) return;
   e.stopPropagation();
+
+  // If already uploaded to RWGPS, open the route
+  if (btn.classList.contains('rwgps-uploaded') && btn.dataset.rwgpsUrl) {
+    window.api.openExternal(btn.dataset.rwgpsUrl);
+    return;
+  }
+
   handleAudaxFileDownload(btn);
 });
 document.getElementById('my-audax-list').addEventListener('click', e => {
   const btn = e.target.closest('.audax-file-btn');
   if (!btn || btn.disabled) return;
   e.stopPropagation();
+
+  // If already uploaded to RWGPS, open the route
+  if (btn.classList.contains('rwgps-uploaded') && btn.dataset.rwgpsUrl) {
+    window.api.openExternal(btn.dataset.rwgpsUrl);
+    return;
+  }
+
   handleAudaxFileDownload(btn);
 });
 document.getElementById('audax-table-body').addEventListener('click', e => {
   const btn = e.target.closest('.audax-file-btn');
   if (!btn || btn.disabled) return;
   e.stopPropagation();
+
+  // If already uploaded to RWGPS, open the route
+  if (btn.classList.contains('rwgps-uploaded') && btn.dataset.rwgpsUrl) {
+    window.api.openExternal(btn.dataset.rwgpsUrl);
+    return;
+  }
+
   handleAudaxFileDownload(btn);
 });
 

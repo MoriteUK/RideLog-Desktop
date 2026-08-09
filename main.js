@@ -569,9 +569,49 @@ ipcMain.handle('audax-download-file', async (event, { fileUrl, fileName, eventNa
     }
 
     shell.showItemInFolder(dest);
-    return { ok: true, path: dest };
+    return { ok: true, path: dest, ext };
   } catch (err) {
     try { fs.unlinkSync(tempPath); } catch (_) {}
+    return { error: err.message };
+  }
+});
+
+// Upload GPX to RideWithGPS
+ipcMain.handle('rwgps-upload-route', async (event, { email, apiKey, gpxPath, routeName }) => {
+  try {
+    const gpxContent = fs.readFileSync(gpxPath, 'utf8');
+    const FormData = require('form-data');
+    const form = new FormData();
+
+    form.append('apikey', apiKey);
+    form.append('email', email);
+    form.append('name', routeName || path.basename(gpxPath, '.gpx'));
+    form.append('track_points', gpxContent);
+    form.append('track_type', 'route');
+
+    const res = await fetch('https://ridewithgps.com/trips.json', {
+      method: 'POST',
+      body: form,
+      headers: form.getHeaders(),
+    });
+
+    if (!res.ok) {
+      return { error: `RideWithGPS upload error ${res.status}: ${await res.text()}` };
+    }
+
+    const data = await res.json();
+
+    if (data.trip && data.trip.id) {
+      return {
+        ok: true,
+        routeId: data.trip.id,
+        url: `https://ridewithgps.com/routes/${data.trip.id}`,
+        name: data.trip.name
+      };
+    }
+
+    return { error: 'Upload succeeded but no route ID returned' };
+  } catch (err) {
     return { error: err.message };
   }
 });

@@ -21,6 +21,7 @@ contextBridge.exposeInMainWorld('api', {
   whoopSync: (creds) => ipcRenderer.invoke('whoop-sync', creds),
   garminSync: (creds) => ipcRenderer.invoke('garmin-sync', creds),
   rwgpsSync: (data) => ipcRenderer.invoke('rwgps-sync', data),
+  rwgpsUploadRoute: (data) => ipcRenderer.invoke('rwgps-upload-route', data),
   microsoftAuth: (data) => ipcRenderer.invoke('microsoft-auth', data),
   microsoftRefresh: (data) => ipcRenderer.invoke('microsoft-refresh', data),
   microsoftGetEvents: (data) => ipcRenderer.invoke('microsoft-get-events', data),
