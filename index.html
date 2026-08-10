@@ -6155,7 +6155,25 @@ function renderPlanTab(){
         const r = await window.api.saveZwo({ xml: res.xml, filename: res.filename });
         btn.disabled = false;
         if (r && r.error) {
-          if (statusEl) { statusEl.textContent = 'Error: ' + r.error; statusEl.style.color = 'var(--red)'; }
+          // If the automatic save failed, offer a manual save dialog
+          if (r.needsSaveDialog && window.api.saveZwoDialog) {
+            if (confirm(`Could not save to Zwift folder: ${r.error}\n\nWould you like to choose a location to save the file?`)) {
+              btn.disabled = true;
+              const r2 = await window.api.saveZwoDialog({ xml: res.xml, filename: res.filename });
+              btn.disabled = false;
+              if (r2 && r2.cancelled) {
+                if (statusEl) { statusEl.textContent = 'Cancelled'; statusEl.style.color = 'var(--muted)'; }
+              } else if (r2 && r2.error) {
+                if (statusEl) { statusEl.textContent = 'Error: ' + r2.error; statusEl.style.color = 'var(--red)'; }
+              } else {
+                if (statusEl) { statusEl.textContent = 'Saved ✓'; statusEl.style.color = 'var(--teal)'; }
+              }
+            } else {
+              if (statusEl) { statusEl.textContent = 'Error: ' + r.error; statusEl.style.color = 'var(--red)'; }
+            }
+          } else {
+            if (statusEl) { statusEl.textContent = 'Error: ' + r.error; statusEl.style.color = 'var(--red)'; }
+          }
         } else {
           if (statusEl) { statusEl.textContent = 'Saved ✓'; statusEl.style.color = 'var(--teal)'; }
         }

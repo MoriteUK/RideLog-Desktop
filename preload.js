@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('api', {
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
   openAudaxUrl: (url) => ipcRenderer.invoke('open-audax-url', url),
   saveZwo: (data) => ipcRenderer.invoke('save-zwo', data),
+  saveZwoDialog: (data) => ipcRenderer.invoke('save-zwo-dialog', data),
   saveGpx: (data) => ipcRenderer.invoke('save-gpx', data),
   saveRideGpx: (data) => ipcRenderer.invoke('save-ride-gpx', data),
   showOpenDialog: (opts) => ipcRenderer.invoke('show-open-dialog', opts),

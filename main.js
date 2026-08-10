@@ -285,14 +285,14 @@ function getOneDriveWorkoutDir() {
   return path.join(os.homedir(), 'OneDrive - Andy White', 'Documents', 'Zwift', 'Workouts', '105600', '325PLan');
 }
 
-ipcMain.handle('save-zwo', (event, { xml, filename }) => {
+ipcMain.handle('save-zwo', async (event, { xml, filename }) => {
   const dir = getZwiftWorkoutDir();
-  if (!dir) return { error: 'Zwift workout folder not found — is Zwift installed?' };
+  if (!dir) return { error: 'Zwift workout folder not found — is Zwift installed?', needsSaveDialog: true };
   try {
     fs.mkdirSync(dir, { recursive: true });
     fs.writeFileSync(path.join(dir, filename), xml, 'utf8');
   } catch (e) {
-    return { error: e.message };
+    return { error: e.message, needsSaveDialog: true };
   }
   try {
     const oneDriveDir = getOneDriveWorkoutDir();
@@ -302,6 +302,21 @@ ipcMain.handle('save-zwo', (event, { xml, filename }) => {
     return { ok: true, warning: `Saved to Zwift folder but not to OneDrive copy: ${e.message}` };
   }
   return { ok: true };
+});
+
+ipcMain.handle('save-zwo-dialog', async (event, { xml, filename }) => {
+  const { filePath } = await dialog.showSaveDialog({
+    title: 'Save Zwift Workout',
+    defaultPath: path.join(os.homedir(), 'Desktop', filename),
+    filters: [{ name: 'Zwift Workout Files', extensions: ['zwo'] }],
+  });
+  if (!filePath) return { cancelled: true };
+  try {
+    fs.writeFileSync(filePath, xml, 'utf8');
+    return { ok: true };
+  } catch (e) {
+    return { error: e.message };
+  }
 });
 
 const GPX_ROUTE_KMS = [22, 34, 49, 72, 95, 134, 159, 199, 228, 286, 344];
