@@ -272,6 +272,24 @@ ipcMain.handle('show-open-dialog', async (event, options) => {
   return dialog.showOpenDialog(options);
 });
 
+ipcMain.handle('show-save-dialog', async (event, options) => {
+  return dialog.showSaveDialog(options);
+});
+
+ipcMain.handle('save-file', async (event, { filePath, content, encoding = 'utf8' }) => {
+  try {
+    if (encoding === 'binary') {
+      // For binary data (like Excel files), content is a Buffer
+      fs.writeFileSync(filePath, Buffer.from(content));
+    } else {
+      fs.writeFileSync(filePath, content, encoding);
+    }
+    return { ok: true };
+  } catch (e) {
+    return { error: e.message };
+  }
+});
+
 function getZwiftWorkoutDir() {
   try {
     const base = path.join(os.homedir(), 'AppData', 'Local', 'Zwift', 'Workouts');

@@ -15,6 +15,8 @@ contextBridge.exposeInMainWorld('api', {
   saveGpx: (data) => ipcRenderer.invoke('save-gpx', data),
   saveRideGpx: (data) => ipcRenderer.invoke('save-ride-gpx', data),
   showOpenDialog: (opts) => ipcRenderer.invoke('show-open-dialog', opts),
+  showSaveDialog: (opts) => ipcRenderer.invoke('show-save-dialog', opts),
+  saveFile: (data) => ipcRenderer.invoke('save-file', data),
   checkAudaxFiles: (url) => ipcRenderer.invoke('audax-check-files', url),
   fetchAudaxElevation: (url) => ipcRenderer.invoke('audax-fetch-elevation', url),
   downloadAudaxFile: (data) => ipcRenderer.invoke('audax-download-file', data),

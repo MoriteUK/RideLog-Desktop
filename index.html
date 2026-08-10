@@ -7206,7 +7206,7 @@ document.getElementById('changelog-modal-backdrop').addEventListener('click', e 
 });
 
 // ---------------- Excel exports ----------------
-function exportTrainingPlan() {
+async function exportTrainingPlan() {
   if (!planRows.length) { showExportStatus('No training plan data.'); return; }
   const header = ['Week (Mon)', 'Target Vol km', 'Target Long km', 'Target Sat km', 'B2B days', 'Focus / Audax', 'Holiday', 'Actual Vol km', 'Actual Long km'];
   const data = planRows.map(r => [
@@ -7224,11 +7224,37 @@ function exportTrainingPlan() {
   const ws = XLSX.utils.aoa_to_sheet([header, ...data]);
   ws['!cols'] = [{wch:14},{wch:16},{wch:16},{wch:16},{wch:10},{wch:44},{wch:10},{wch:16},{wch:16}];
   XLSX.utils.book_append_sheet(wb, ws, 'Training Plan');
-  XLSX.writeFile(wb, 'training-plan.xlsx');
-  showExportStatus('Training plan exported.');
+
+  // Try direct write first (browser mode), fall back to save dialog (Electron mode)
+  try {
+    XLSX.writeFile(wb, 'training-plan.xlsx');
+    showExportStatus('Training plan exported.');
+  } catch (e) {
+    // In Electron, XLSX.writeFile may fail - use save dialog instead
+    if (window.api && window.api.showSaveDialog) {
+      const { filePath, canceled } = await window.api.showSaveDialog({
+        title: 'Export Training Plan',
+        defaultPath: 'training-plan.xlsx',
+        filters: [{ name: 'Excel Files', extensions: ['xlsx'] }]
+      });
+      if (canceled) {
+        showExportStatus('Export cancelled.');
+        return;
+      }
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
+      const result = await window.api.saveFile({ filePath, content: wbout, encoding: 'binary' });
+      if (result.error) {
+        showExportStatus('Error: ' + result.error);
+      } else {
+        showExportStatus('Training plan exported.');
+      }
+    } else {
+      showExportStatus('Error: ' + e.message);
+    }
+  }
 }
 
-function exportWeightLog() {
+async function exportWeightLog() {
   const rows = [...entries].filter(e => e.weightKg != null).sort((a,b) => a.date < b.date ? -1 : 1);
   if (!rows.length) { showExportStatus('No weight data to export.'); return; }
   const wb = XLSX.utils.book_new();
@@ -7255,8 +7281,33 @@ function exportWeightLog() {
   ws2['!cols'] = [{wch:14},{wch:12},{wch:12},{wch:12},{wch:12}];
   XLSX.utils.book_append_sheet(wb, ws2, 'Monthly Summary');
 
-  XLSX.writeFile(wb, 'weight-log.xlsx');
-  showExportStatus('Weight log exported.');
+  // Try direct write first (browser mode), fall back to save dialog (Electron mode)
+  try {
+    XLSX.writeFile(wb, 'weight-log.xlsx');
+    showExportStatus('Weight log exported.');
+  } catch (e) {
+    // In Electron, XLSX.writeFile may fail - use save dialog instead
+    if (window.api && window.api.showSaveDialog) {
+      const { filePath, canceled } = await window.api.showSaveDialog({
+        title: 'Export Weight Log',
+        defaultPath: 'weight-log.xlsx',
+        filters: [{ name: 'Excel Files', extensions: ['xlsx'] }]
+      });
+      if (canceled) {
+        showExportStatus('Export cancelled.');
+        return;
+      }
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
+      const result = await window.api.saveFile({ filePath, content: wbout, encoding: 'binary' });
+      if (result.error) {
+        showExportStatus('Error: ' + result.error);
+      } else {
+        showExportStatus('Weight log exported.');
+      }
+    } else {
+      showExportStatus('Error: ' + e.message);
+    }
+  }
 }
 
 function showExportStatus(msg) {
